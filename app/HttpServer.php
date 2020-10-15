@@ -1,6 +1,8 @@
 <?php
 namespace app;
+use http\Exception\BadConversionException;
 use Workerman\Worker;
+use Workerman\MySQL\Connection;
 
 class HttpServer
 {
@@ -50,7 +52,7 @@ class HttpServer
 //            }
             $user = new User();
             $user->output();
-
+            $user->callManyTimes();
             $connection->close($string);
         };
         
@@ -62,6 +64,12 @@ class HttpServer
         $this->http_worker->onClose = function($connection)
         {
 //            echo ">";
+        };
+
+        $this->http_worker->onWorkerStart = function ($worker)
+        {
+            global $Userdb;
+            $Userdb = new Connection("dev-mysql","3306","root","root","testEs");
         };
 
     }

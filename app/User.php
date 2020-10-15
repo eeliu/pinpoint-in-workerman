@@ -14,6 +14,21 @@ class User
     public function output()
     {
         global $id;
-        echo $id."\n";
+        global $Userdb;
+        $all_user = $Userdb->query("select * from testEs.siam_users");
+        json_encode($all_user);
+    }
+
+    public  function callManyTimes()
+    {
+        for($i=0;$i<10;$i++)
+        {
+            $this->doNothing(2341234);
+        }
+    }
+
+    public function doNothing($i)
+    {
+
     }
 }

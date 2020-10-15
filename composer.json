@@ -16,7 +16,6 @@
     "require": {
         "workerman/workerman": "^4.0",
         "workerman/mysql": "master",
-        "react/mysql": "master",
         "pinpoint-apm/pinpoint-php-aop": "dev-test_np_hack"
     }
 }

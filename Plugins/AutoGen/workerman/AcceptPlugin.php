@@ -1,44 +1,94 @@
 <?php
-namespace Plugins\Framework\Swoole\Http;
+/**
+ * Created by PhpStorm.
+ * User: eeliu
+ * Date: 10/14/20
+ * Time: 2:28 PM
+ */
 
-use Plugins\Framework\Swoole\IDContext;
+namespace Plugins\AutoGen\workerman;
+require_once __DIR__."/../../__init__.php";
 use Plugins\Util\Trace;
-require_once __DIR__."/../../../__init__.php";
-require_once __DIR__."/../../../Common/PluginsDefines.php";
 
-class PerReqPlugin
+/**
+ * @hook: Workerman\Worker::acceptConnection
+ */
+class AcceptPlugin
 {
-    private  $_callback;
-    public $tid = null;
-    public $sid = null;
-    public $psid = null;
-    public $pname = null;
-    public $ptype = null;
-
-    public $ah = null;
-    public $app_name = null;
-    public $app_id = null;
-    private $curNextSpanId = '';
-    public $args=[];
-
-    public function __construct(callable $callback)
+    protected $worker_self;
+    protected $origin_onMessage;
+    protected $origin_onConnect;
+    protected $origin_onClose;
+    public function __construct($apId,$who,&...$args)
     {
-        $this->_callback = $callback;
+        assert($who instanceof \Workerman\Worker);
+        $this->worker_self = $who;
+    }
+
+    public function onEnd()
+    {
+        $this->worker_self->onMessage =  $this->origin_onMessage;
+        $this->worker_self->onConnect =  $this->origin_onConnect;
+        $this->worker_self->onClose   =  $this->origin_onClose ;
+    }
+
+
+    public function onBefore(){
+        $this->origin_onMessage =  $this->worker_self->onMessage;
+        $this->origin_onConnect =  $this->worker_self->onConnect;
+        $this->origin_onClose  =   $this->worker_self->onClose;
+        $this->worker_self->onMessage = function ($connection, $request) {
+            $id = $connection->_pinpoint_node_id_;
+            echo "onMessage $id \n";
+            Context::getInstance()->setId($id);
+            $this->onRequest($connection,$request);
+            if(!empty($this->origin_onMessage))
+            {
+                ($this->origin_onMessage)($connection,$request);
+            }
+        };
+
+        $this->worker_self->onConnect = function($connection) {
+            $id =pinpoint_start_trace(0);
+            //  store _pinpoint_id_ into connection
+            $connection->_pinpoint_node_id_ = $id;
+            echo "onConnect $id \n";
+            if(!empty($this->origin_onConnect))
+            {
+                ($this->origin_onConnect)($connection);
+            }
+        };
+
+        $this->worker_self->onClose = function($connection)
+        {
+            // request end
+            if(!empty($this->origin_onClose))
+            {
+                ($this->origin_onClose)($connection);
+            }
+            $this->onClose($connection);
+        };
+
 
     }
-    
-    protected function onBefore()
+
+    public function onException($e)
     {
-        $id = pinpoint_start_trace(0);
-        IDContext::set($id);
-        print("PerReqPlugin call onBefore ".IDContext::get()."\n");
-        $request = &$this->args[0];
-        $header = &$request->header;
-        pinpoint_add_clue("uri",$request->server['request_uri'],$id);
-        pinpoint_add_clue("client",$request->server['remote_addr'],$id);
+
+    }
+
+
+    public function onRequest(&$connection, &$request)
+    {
+        $id = $connection->_pinpoint_node_id_;
+
+        $header =$request->header();
+//        var_dump($header);
+        pinpoint_add_clue("uri",$request->uri(),$id);
+        pinpoint_add_clue("client",$connection->getRemoteIp(),$id);
         pinpoint_add_clue("server",$header['host'],$id);
         pinpoint_add_clue("stp", PHP,$id);
-        pinpoint_add_clue(INTERCEPTER_NAME, "swoole-http-server",$id);
+        pinpoint_add_clue(INTERCEPTER_NAME, "workerman-http",$id);
         $this->app_name = APPLICATION_NAME;
         pinpoint_add_clue("appname", $this->app_name,$id);
         pinpoint_set_context("appname",$this->app_name,$id);
@@ -107,39 +157,17 @@ class PerReqPlugin
         pinpoint_set_context('tid', $this->tid,$id);
         pinpoint_add_clue("sid", $this->sid,$id);
         pinpoint_set_context('sid', $this->tid,$id);
-    }
-
-
-    protected function onException($e)
-    {
 
     }
 
-    protected function onEnd(&$ret)
+    public function onClose(&$connection)
     {
-        pinpoint_end_trace(IDContext::get());
-        print("PerReqPlugin call onEnd ".IDContext::get()."\r\n\r\n");
-    }
-
-    public function __invoke(&...$args)
-    {
-        $this->args = $args;
-        $this->onBefore();
-        try{
-            $ret = call_user_func_array($this->_callback,$args);
-            $this->onEnd($ret);
-            return $ret;
-        }catch (\Exception $e){
-            $this->onException($e);
-            throw $e;
-        }
+        pinpoint_end_trace($connection->_pinpoint_node_id_);
+        echo "onClose ".$connection->_pinpoint_node_id_."\n";
     }
 
     public function generateTransactionID()
     {
         return  $this->app_id . '^' . strval(pinpoint_start_time()) . '^' . strval(pinpoint_unique_id());
     }
-
-
-
 }
