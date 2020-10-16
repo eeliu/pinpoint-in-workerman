@@ -53,7 +53,9 @@ class HttpServer
             $user = new User();
             $user->output();
             $user->callManyTimes();
-            $connection->close($string);
+            $user->callRemote($connection);
+            
+//            $connection->close($string);
         };
         
         $this->http_worker->onConnect = function($connection)
