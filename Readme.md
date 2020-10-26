@@ -5,6 +5,8 @@
 
 ### 1. Download plugins from pinpoint-c-agent
 
+[ pinpoint-php-plugins.tar.gz ](https://github.com/pinpoint-apm/pinpoint-c-agent/releases/download/v4.0.0-beta/pinpoint-php-plugins-v4.0.0.tar.gz)
+
 ### 2. Make it works
 
 #### 2.1 app/http-server
