@@ -2,6 +2,10 @@
 
 ## Steps
 
+> prerequisite 
+
+- [ ] pinpoint-c-agent module installed
+- [ ] collect-agent works fine
 
 ### 1. Download plugins from pinpoint-c-agent
 
