@@ -17,7 +17,7 @@
 
 1. copy `Plugins` into root
 2. composer update
-3. cp `Plugins/Framework/workerman/setting.ini` into root
+3. cp `Plugins/Framework/workerman/setting.ini` into `Plugins/`
 4. run `php run_server.php start`
 
 > Note:
