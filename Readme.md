@@ -9,7 +9,7 @@
 
 ### 1. Download plugins from pinpoint-c-agent
 
-[ pinpoint-php-plugins.tar.gz ](https://github.com/pinpoint-apm/pinpoint-c-agent/releases/download/v4.0.0-beta/pinpoint-php-plugins-v4.0.0.tar.gz)
+[ pinpoint-php-plugins.tar.gz ](https://github.com/pinpoint-apm/pinpoint-c-agent/releases/download/v0.4.0/pinpoint-php-plugins-v0.4.0.zip)
 
 ### 2. Make it works
 
